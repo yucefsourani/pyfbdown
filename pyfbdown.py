@@ -266,7 +266,7 @@ class DownloadYesOrNo(Gtk.MessageDialog):
     def __init__(self,msg,parent=None):
         Gtk.MessageDialog.__init__(self)
         self.add_buttons(
-            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,"ReDownload File",Gtk.ResponseType.REJECT ,"Resume Download", Gtk.ResponseType.OK
+            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,"ReDownload File",Gtk.ResponseType.REJECT ,"Try Resume Download", Gtk.ResponseType.OK
         )
         self.props.message_type = Gtk.MessageType.QUESTION
         self.props.text         = msg
@@ -681,8 +681,13 @@ class FBDownloader(Gtk.ApplicationWindow):
     def on_download(self,button,progressbar,store,combo,cancel_button,close_button):
         mode = "wb"
         saveas_location = os.path.join(self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1])
+
         if  os.path.exists(saveas_location):
-            yn = DownloadYesOrNo(_("{} Already Exists\nTry Resume Download?".format(saveas_location)),self)
+            if os.stat(saveas_location).st_size == int(store[combo.get_active_iter()][4]):
+                progressbar.set_text("{} Already Exists".format(saveas_location))
+                progressbar.show()
+                return
+            yn = DownloadYesOrNo(_("{} Already Exists".format(saveas_location)),self)
             check = yn.check()
             if  check=="cancel":
                 return
