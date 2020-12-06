@@ -262,7 +262,41 @@ class GstWidget(Gtk.EventBox):
             self.player.set_state(Gst.State.PAUSED)
             #self.btnPlay.set_label("Play")"""
 
-
+class DownloadYesOrNo(Gtk.MessageDialog):
+    def __init__(self,msg,parent=None):
+        Gtk.MessageDialog.__init__(self)
+        self.add_buttons(
+            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,"ReDownload File",Gtk.ResponseType.REJECT ,"Resume Download", Gtk.ResponseType.OK
+        )
+        self.props.message_type = Gtk.MessageType.QUESTION
+        self.props.text         = msg
+        self.p=parent
+        if self.p != None:
+            self.parent=self.p
+            self.set_transient_for(self.p)
+            self.set_modal(True)
+            self.p.set_sensitive(False)
+        else:
+            self.set_position(Gtk.WindowPosition.CENTER)
+            
+    def check(self):
+        rrun = self.run()
+        if rrun == Gtk.ResponseType.OK:
+            self.destroy()
+            if self.p != None:
+                self.p.set_sensitive(True)
+            return "resume"
+        elif rrun == Gtk.ResponseType.REJECT:
+            self.destroy()
+            if self.p != None:
+                self.p.set_sensitive(True)
+            return "redownload"
+        else:
+            if self.p != None:
+                self.p.set_sensitive(True)
+            self.destroy()
+            return "cancel"
+            
 class YesOrNo(Gtk.MessageDialog):
     def __init__(self,msg,parent=None):
         Gtk.MessageDialog.__init__(self,buttons = Gtk.ButtonsType.OK_CANCEL)
@@ -295,7 +329,7 @@ class DownloadFile(GObject.Object,threading.Thread):
     __gsignals__ = { "break"     : (GObject.SignalFlags.RUN_LAST, None, ())
     }
     
-    def __init__(self,parent,progressbar,button,link,location=None,filename=None,cancel_button=None,close_button=None):
+    def __init__(self,parent,progressbar,button,link,location=None,filename=None,fsize=None,cancel_button=None,close_button=None,mode="w",header={"User-Agent":"Mozilla/5.0"}):
         GObject.Object.__init__(self)
         threading.Thread.__init__(self)
         self.parent        = parent
@@ -304,9 +338,12 @@ class DownloadFile(GObject.Object,threading.Thread):
         self.link          = link
         self.location      = location
         self.filename      = filename
+        self.fsize         = fsize
         self.break_        = False
         self.cancel_button = cancel_button
         self.close_button  = close_button
+        self.mode          = mode
+        self.header        = header
         self.connect("break",self.on_break)
 
         
@@ -318,17 +355,35 @@ class DownloadFile(GObject.Object,threading.Thread):
         GLib.idle_add(self.progressbar.show)
         GLib.idle_add(self.button.set_sensitive,False)
         GLib.idle_add(self.close_button.set_sensitive,False)
+        saveas_location = os.path.join(self.location,self.filename) 
+        ch = 64*1024 
         try:
-            url   = request.Request(self.link,headers={"User-Agent":"Mozilla/5.0"})
-            opurl = request.urlopen(url,timeout=10)
-            """try:
-                saveas = opurl.headers["Content-Disposition"].split("=",1)[-1]
-            except Exception as e:
-                saveas = self.filename"""
-            saveas_location = os.path.join(self.location,self.filename)            
-            size = int(opurl.headers["Content-Length"])
-            psize = 0
-            with open(saveas_location, 'wb') as op:
+            with open(saveas_location, self.mode) as op:
+                if self.mode == "wb":
+                    current_size = 0
+                else:
+                    op.seek(0,os.SEEK_END)
+                    current_size = op.tell()
+                psize = current_size
+                if current_size == int(self.fsize):
+                    GLib.idle_add(self.progressbar.set_fraction,0.0)
+                    GLib.idle_add(self.progressbar.set_text,_("Done"))
+                    GLib.idle_add(self.button.set_sensitive,True)
+                    GLib.idle_add(self.close_button.set_sensitive,True)
+                    GLib.idle_add(self.cancel_button.set_sensitive,False)
+                    try:
+                        op.close()
+                    except Exception as e:
+                        pass
+                    return
+                if "Range" in self.header.keys():
+                    self.header["Range"] = "bytes={}-{}".format(current_size,self.fsize)
+                else:
+                    self.header.setdefault("Range", "bytes={}-{}".format(current_size,self.fsize))
+                
+                url   = request.Request(self.link,headers=self.header)
+                opurl = request.urlopen(url,timeout=10)
+
                 while True:
                     if self.break_:
                         GLib.idle_add(self.progressbar.set_fraction,0.0)
@@ -336,16 +391,27 @@ class DownloadFile(GObject.Object,threading.Thread):
                         GLib.idle_add(self.button.set_sensitive,True)
                         GLib.idle_add(self.close_button.set_sensitive,True)
                         GLib.idle_add(self.cancel_button.set_sensitive,False)
-                        return 
-                    chunk = opurl.read(600)
-                    if not chunk:
+                        try:
+                            op.close()
+                            opurl.close()
+                        except Exception as e:
+                            pass
+                        return
+                    op.flush()
+                    if psize >=int(self.fsize):
                         break
-                    count = int((psize*100)//size)
+                    n = int(self.fsize)-psize
+                    if n<ch:
+                        ch = n
+
+                    chunk = opurl.read(ch)
+
+                    count = int((psize*100)//int(self.fsize))
                     fraction = count/100
                     op.write(chunk)
-                    psize += 600
+                    psize += ch
                     GLib.idle_add(self.progressbar.set_fraction,fraction)
-                    GLib.idle_add(self.progressbar.set_text,str(count)+"%")
+                    GLib.idle_add(self.progressbar.set_text,str(count)+"%"+" "+str(psize)+"/"+self.fsize+" B")
                 
             GLib.idle_add(self.progressbar.set_fraction,1.0)
             GLib.idle_add(self.progressbar.set_text,_("Done"))
@@ -357,6 +423,11 @@ class DownloadFile(GObject.Object,threading.Thread):
             GLib.idle_add(self.close_button.set_sensitive,True)
             GLib.idle_add(self.cancel_button.set_sensitive,False)
             return False
+        finally:
+            try:
+                opurl.close()
+            except Exception as e:
+                pass
             
         GLib.idle_add(self.progressbar.set_fraction,0.0)
         GLib.idle_add(self.button.set_sensitive,True)
@@ -507,14 +578,16 @@ class FBDownloader(Gtk.ApplicationWindow):
                 rlt    = hd[1]
                 req2   = request.Request(rlt,headers={"User-Agent":"Mozilla/5.0"})
                 opurl2 = request.urlopen(req2,timeout=10)          
-                size   = int(opurl2.headers["Content-Length"])/1024//1024
-                result+= "HD-{}MB_{} ".format(str(size),os.path.basename(rlt.split("?")[0]))+rlt+" "+url + " "
+                size   = int(opurl2.headers["Content-Length"])
+                sizes  = round(int(opurl2.headers["Content-Length"])/1024/1024,2)
+                result+= "HD-{}MB_{} ".format(str(sizes),os.path.basename(rlt.split("?")[0]))+rlt+" "+url + " "+str(size)+ " "
             if sd:
                 rlt    = sd[1]
                 req2   = request.Request(rlt,headers={"User-Agent":"Mozilla/5.0"})
                 opurl2 = request.urlopen(req2,timeout=10)          
-                size   = int(opurl2.headers["Content-Length"])/1024//1024
-                result+= "SD-{}MB_{} ".format(str(size),os.path.basename(rlt.split("?")[0]))+rlt+" "+url + " "
+                size   = int(opurl2.headers["Content-Length"])
+                sizes  = round(int(opurl2.headers["Content-Length"])/1024/1024,2)
+                result+= "SD-{}MB_{} ".format(str(sizes),os.path.basename(rlt.split("?")[0]))+rlt+" "+url + " "+str(size)+ " "
         except Exception as e :
             print(e)
         GLib.idle_add(self.info_button.set_sensitive,True)
@@ -530,8 +603,8 @@ class FBDownloader(Gtk.ApplicationWindow):
         links = links.split()
         links = [i for i in links if i]
         for i in range(0,len(links)):
-            if i==0:
-                result.append([links[i].split("_",1)[0],links[i],links[i+1],links[i+2]])
+            if i==0 :
+                result.append([links[i].split("_",1)[0],links[i],links[i+1],links[i+2],links[i+3]])
         self.config__["current_links"].append(result)
         change_metadata_info(self.config__)
         self.make_listbox_row(result)
@@ -563,7 +636,7 @@ class FBDownloader(Gtk.ApplicationWindow):
         #ggg = GstWidget(result[0][-1],self) # fix later
         #v1.pack_start(ggg,False,False,0)
         h.pack_start(v1,False,False,0)
-        store = Gtk.ListStore(str,str,str,str)
+        store = Gtk.ListStore(str,str,str,str,str)
         for i in result:
             store.append(i)
         
@@ -606,16 +679,18 @@ class FBDownloader(Gtk.ApplicationWindow):
 
         
     def on_download(self,button,progressbar,store,combo,cancel_button,close_button):
+        mode = "wb"
         saveas_location = os.path.join(self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1])
         if  os.path.exists(saveas_location):
-            yn = YesOrNo(_("{} Already Exists\nReplace file ?".format(saveas_location)),self)
-            if not yn.check():
+            yn = DownloadYesOrNo(_("{} Already Exists\nTry Resume Download?".format(saveas_location)),self)
+            check = yn.check()
+            if  check=="cancel":
                 return
-            check = subprocess.call("rm {}".format(saveas_location),shell=True)
-            if check!=0:
-                return
+            elif check=="resume":
+                mode = "ab"
+
                 
-        t = DownloadFile(self,progressbar,button,store[combo.get_active_iter()][2],self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1],cancel_button,close_button)
+        t = DownloadFile(self,progressbar,button,store[combo.get_active_iter()][2],self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1],store[combo.get_active_iter()][4],cancel_button,close_button,mode)
         t.setDaemon(True)
         cancel_button.connect("clicked",self.on_cancel_button_clicked,t)
         cancel_button.set_sensitive(True)
