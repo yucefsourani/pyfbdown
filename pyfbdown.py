@@ -504,11 +504,17 @@ class FBDownloader(Gtk.ApplicationWindow):
             hd     = re.search('hd_src:"(.+?)"',html)
             sd     = re.search('sd_src:"(.+?)"',html)
             if hd:
-                rlt = hd[1]
-                result+="HD_{} ".format(os.path.basename(rlt.split("?")[0]))+rlt+" "+url + " "
+                rlt    = hd[1]
+                req2   = request.Request(rlt,headers={"User-Agent":"Mozilla/5.0"})
+                opurl2 = request.urlopen(req2,timeout=10)          
+                size   = int(opurl2.headers["Content-Length"])/1024//1024
+                result+= "HD-{}MB_{} ".format(str(size),os.path.basename(rlt.split("?")[0]))+rlt+" "+url + " "
             if sd:
-                rlt = sd[1]
-                result+="SD_{} ".format(os.path.basename(rlt.split("?")[0]))+rlt+" "+url + " "
+                rlt    = sd[1]
+                req2   = request.Request(rlt,headers={"User-Agent":"Mozilla/5.0"})
+                opurl2 = request.urlopen(req2,timeout=10)          
+                size   = int(opurl2.headers["Content-Length"])/1024//1024
+                result+= "SD-{}MB_{} ".format(str(size),os.path.basename(rlt.split("?")[0]))+rlt+" "+url + " "
         except Exception as e :
             print(e)
         GLib.idle_add(self.info_button.set_sensitive,True)
@@ -561,7 +567,8 @@ class FBDownloader(Gtk.ApplicationWindow):
         for i in result:
             store.append(i)
         
-        combo = Gtk.ComboBox.new_with_model_and_entry(store)
+        combo = Gtk.ComboBoxText.new()
+        combo.set_model(store)
         combo.set_entry_text_column(0)
         combo.set_active(0)
         close_button = Gtk.Button()
