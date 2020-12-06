@@ -290,23 +290,6 @@ class YesOrNo(Gtk.MessageDialog):
             self.destroy()
             return False
 
-class Yes_Or_No(Gtk.MessageDialog):
-    def __init__(self,msg,parent=None):
-        Gtk.MessageDialog.__init__(self,buttons = Gtk.ButtonsType.YES_NO )
-        self.props.message_type = Gtk.MessageType.QUESTION
-        self.props.text         = msg
-        self.p=parent
-        if self.p != None:
-            self.parent=self.p
-            GLib.idle_add(self.set_transient_for,self.p)
-            GLib.idle_add(self.set_modal,True)
-            GLib.idle_add(self.p.set_sensitive,False)
-        else:
-            GLib.idle_add(self.set_position,Gtk.WindowPosition.CENTER)
-        GLib.idle_add(self.show_all)
-    def check(self):
-        self.run()
-
 
 class DownloadFile(GObject.Object,threading.Thread):
     __gsignals__ = { "break"     : (GObject.SignalFlags.RUN_LAST, None, ())
@@ -329,14 +312,6 @@ class DownloadFile(GObject.Object,threading.Thread):
         
     def on_break(self,s):
         self.break_ = True        
-        
-    def on_dialog_response(self,dialog,response):
-        if response == Gtk.ResponseType.YES:
-            self.break_ = False
-        else:
-            self.break_ = True
-        GLib.idle_add(self.parent.set_sensitive,True)
-        GLib.idle_add(dialog.destroy)
             
     def run(self):
         self.break_ = False
@@ -346,26 +321,11 @@ class DownloadFile(GObject.Object,threading.Thread):
         try:
             url   = request.Request(self.link,headers={"User-Agent":"Mozilla/5.0"})
             opurl = request.urlopen(url,timeout=10)
-            try:
+            """try:
                 saveas = opurl.headers["Content-Disposition"].split("=",1)[-1]
             except Exception as e:
-                saveas = self.filename
-            saveas_location = os.path.join(self.location,saveas)
-            if  os.path.isfile(saveas_location):
-                yn = Yes_Or_No(_("{} Already Exists\nReplace file ?".format(saveas_location)),self.parent)
-                GLib.idle_add(yn.connect,"response",self.on_dialog_response)
-                yn.check()
-                if not self.break_:
-                    check = subprocess.call("rm {}".format(saveas_location),shell=True)
-                    if check!=0:
-                        GLib.idle_add(self.progressbar.set_text,_("Remove {} Failed.".format(saveas_location)))
-                        GLib.idle_add(self.progressbar.set_fraction,0.0)
-                        GLib.idle_add(self.button.set_sensitive,True)                
-                        GLib.idle_add(self.close_button.set_sensitive,True)                
-                        GLib.idle_add(self.cancel_button.set_sensitive,False)  
-                        return
-
-            
+                saveas = self.filename"""
+            saveas_location = os.path.join(self.location,self.filename)            
             size = int(opurl.headers["Content-Length"])
             psize = 0
             with open(saveas_location, 'wb') as op:
@@ -639,6 +599,15 @@ class FBDownloader(Gtk.ApplicationWindow):
 
         
     def on_download(self,button,progressbar,store,combo,cancel_button,close_button):
+        saveas_location = os.path.join(self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1])
+        if  os.path.exists(saveas_location):
+            yn = YesOrNo(_("{} Already Exists\nReplace file ?".format(saveas_location)),self)
+            if not yn.check():
+                return
+            check = subprocess.call("rm {}".format(saveas_location),shell=True)
+            if check!=0:
+                return
+                
         t = DownloadFile(self,progressbar,button,store[combo.get_active_iter()][2],self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1],cancel_button,close_button)
         t.setDaemon(True)
         cancel_button.connect("clicked",self.on_cancel_button_clicked,t)
