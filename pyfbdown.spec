@@ -1,6 +1,6 @@
 Name:           pyfbdown
 Version:        1.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Facebook Videos Downloader
 License:        GPLv3     
 URL:            https://github.com/yucefsourani/pyfbdown
@@ -41,6 +41,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Dec 7 2020 yucuf sourani <youssef.m.sourani@gmail.com> 1.0-2
+- Release 2
+
 * Mon Dec 7 2020 yucuf sourani <youssef.m.sourani@gmail.com> 1.0-1
 - Initial For Fedora 
 
