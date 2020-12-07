@@ -10,6 +10,7 @@ BuildRequires:  python3-devel
 BuildRequires: gettext
 Requires:       python3-gobject
 Requires:       gtk3
+Requires:       gettext
 
 
 %description
