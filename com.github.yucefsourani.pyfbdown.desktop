@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=PyFbown
+GenericName=PyFbown Video Downloader
+Comment=Facebook Video Downloader
+Terminal=false
+TryExec=pyfbdown.py
+Exec=pyfbdown.py
+Icon=com.github.yucefsourani.pyfbdown.png
+Categories=GTK;Utility;Settings;
+StartupNotify=false

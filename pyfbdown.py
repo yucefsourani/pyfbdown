@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 #  pyfbdown.py
@@ -66,11 +66,11 @@ version_         = "1.0"
 copyright_       = "Copyright © 2020 Youssef Sourani"
 comments_        = "Facebook Videos Downloader"
 website_         = "https://github.com/yucefsourani/pyfbdown"
-translators_     = ("translator-credit")
+translators_     = "Arabic Yucef Sourani"
 appname          = "pyfbdown"
 appwindowtitle   = "PyFBDown"
 appid            = "com.github.yucefsourani.pyfbdown"
-icon_            = get_correct_path("pixmaps/com.github.yucefsourani.pyfbdown.svg")
+icon_            = get_correct_path("pixmaps/com.github.yucefsourani.pyfbdown.png")
 if not os.path.isfile(icon_):
     icon_ = None
 
@@ -163,7 +163,7 @@ class GstWidget(Gtk.EventBox):
         self.connect("leave-notify-event",self.on_leave)
         self.connect("enter-notify-event",self.on_enter)
         
-        pix1 = GdkPixbuf.Pixbuf.new_from_file_at_scale(os.path.join(get_correct_path("data"),"play.png"),32,32,True)
+        pix1 = GdkPixbuf.Pixbuf.new_from_file_at_scale(os.path.join(get_correct_path("pyfbdown-data/images"),"play.png"),32,32,True)
         self.playi = Gtk.Image.new_from_pixbuf(pix1 )
         self.play  = Gtk.EventBox()
         self.play.add(self.playi)
@@ -173,7 +173,7 @@ class GstWidget(Gtk.EventBox):
         self.play.add_events(Gdk.EventMask.BUTTON_PRESS_MASK )
         self.play.connect("button-press-event",self.on_play)
 
-        pix2 = GdkPixbuf.Pixbuf.new_from_file_at_scale(os.path.join(get_correct_path("data"),"stop.svg"),32,32,True)
+        pix2 = GdkPixbuf.Pixbuf.new_from_file_at_scale(os.path.join(get_correct_path("pyfbdown-data/images"),"stop.svg"),32,32,True)
         self.stopi = Gtk.Image.new_from_pixbuf(pix2)
         self.stop  = Gtk.EventBox()
         self.stop.add(self.stopi)

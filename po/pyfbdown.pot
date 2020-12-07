@@ -1,0 +1,74 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-12-07 13:28+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../pyfbdown.py:370 ../pyfbdown.py:417
+msgid "Done"
+msgstr ""
+
+#: ../pyfbdown.py:390
+msgid "Canceled"
+msgstr ""
+
+#: ../pyfbdown.py:421
+msgid "Fail"
+msgstr ""
+
+#: ../pyfbdown.py:478
+msgid "Paste URL"
+msgstr ""
+
+#: ../pyfbdown.py:505
+msgid "Saves Video Location"
+msgstr ""
+
+#: ../pyfbdown.py:518
+msgid "URL"
+msgstr ""
+
+#: ../pyfbdown.py:524 ../pyfbdown.py:525
+msgid "Enter Facebook Video Url..."
+msgstr ""
+
+#: ../pyfbdown.py:535
+msgid "Get Info"
+msgstr ""
+
+#: ../pyfbdown.py:648
+msgid "Remove Task"
+msgstr ""
+
+#: ../pyfbdown.py:650
+msgid "Download"
+msgstr ""
+
+#: ../pyfbdown.py:652
+msgid "Cancel"
+msgstr ""
+
+#: ../pyfbdown.py:670
+msgid "Are You Sure You Want To Remove This Task?"
+msgstr ""
+
+#: ../pyfbdown.py:690
+msgid "{} Already Exists"
+msgstr ""
+
+#: ../pyfbdown.py:737
+msgid "Tasks Running In Background,Are You Sure You Want To Exit?"
+msgstr ""
