@@ -20,7 +20,7 @@ Python Program To Download Videos From Facebook .
 
 
 
-# To Use
+# To Use (Fedora)
 
    sudo dnf copr enable youssefmsourani/pyfbdown -y
  
