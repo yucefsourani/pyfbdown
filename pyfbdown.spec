@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        Facebook Videos Downloader
 License:        GPLv3     
 URL:            https://github.com/yucefsourani/pyfbdown
-Source0:        https://github.com/yucefsourani/pyfbdown/archive/master.zip
+Source0:        https://github.com/yucefsourani/pyfbdown/archive/main.zip
 BuildArch:      noarch
 BuildRequires:  python3-devel
 BuildRequires: gettext
