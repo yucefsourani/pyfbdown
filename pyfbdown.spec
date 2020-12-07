@@ -17,7 +17,7 @@ Facebook Videos Downloader.
 
 
 %prep
-%autosetup -n pyfbdown-master
+%autosetup -n pyfbdown-main
 
 %build
 
