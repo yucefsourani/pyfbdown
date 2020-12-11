@@ -53,7 +53,13 @@ def get_correct_path(relative_path):
             
     return os.path.join(base_path, relative_path)
 
-if sys.platform.startswith('win'):
+default_metadata = """{{"current_links"           : [],"current_save_location"   : "{}"}}
+""".format(GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS))
+
+win = sys.platform.startswith('win')
+if win:
+    default_metadata = """{{"current_links"           : [],"current_save_location"   : "{}"}}
+    """.format(GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS).replace("\\","/"))
     import locale
     if os.getenv('LANG') is None:
         lang, enc = locale.getdefaultlocale()
@@ -74,8 +80,7 @@ icon_            = get_correct_path("pixmaps/com.github.yucefsourani.pyfbdown.pn
 if not os.path.isfile(icon_):
     icon_ = None
 
-default_metadata = """{{"current_links"           : [],"current_save_location"   : "{}"}}
-""".format(GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS))
+
 
 default_metadata_file_name = os.path.join(GLib.get_user_config_dir(),"pyfbdown.json")
 
@@ -491,11 +496,17 @@ class FBDownloader(Gtk.ApplicationWindow):
             self.download_entry.set_text(text)
             
     def make_entry(self):
-        folder = self.config__["current_save_location"]
+        if win :
+            folder = self.config__["current_save_location"].replace("/","\\")
+        else:
+            folder = self.config__["current_save_location"]
         if not os.path.isdir(folder):
             folder = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_VIDEOS)
             self.config__["current_save_location"] = folder
-        self.folder = "file://"+folder 
+        if win:
+            self.folder = "file:/"+folder 
+        else:
+            self.folder = "file://"+folder
         self.choicefolder = Gtk.FileChooserButton(action="select-folder")
         self.choicefolder.set_uri(self.folder)
         self.choicefolder.set_margin_start(10)
@@ -680,7 +691,10 @@ class FBDownloader(Gtk.ApplicationWindow):
         
     def on_download(self,button,progressbar,store,combo,cancel_button,close_button):
         mode = "wb"
-        saveas_location = os.path.join(self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1])
+        if win:
+            saveas_location = os.path.join(self.choicefolder.get_uri()[8:],store[combo.get_active_iter()][1])
+        else:
+            saveas_location = os.path.join(self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1])
 
         if  os.path.exists(saveas_location):
             if os.stat(saveas_location).st_size == int(store[combo.get_active_iter()][4]):
@@ -694,8 +708,10 @@ class FBDownloader(Gtk.ApplicationWindow):
             elif check=="resume":
                 mode = "ab"
 
-                
-        t = DownloadFile(self,progressbar,button,store[combo.get_active_iter()][2],self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1],store[combo.get_active_iter()][4],cancel_button,close_button,mode)
+        if win:
+            t = DownloadFile(self,progressbar,button,store[combo.get_active_iter()][2],self.choicefolder.get_uri()[8:],store[combo.get_active_iter()][1],store[combo.get_active_iter()][4],cancel_button,close_button,mode)
+        else:
+            t = DownloadFile(self,progressbar,button,store[combo.get_active_iter()][2],self.choicefolder.get_uri()[7:],store[combo.get_active_iter()][1],store[combo.get_active_iter()][4],cancel_button,close_button,mode)
         t.setDaemon(True)
         cancel_button.connect("clicked",self.on_cancel_button_clicked,t)
         cancel_button.set_sensitive(True)
@@ -737,11 +753,17 @@ class Application(Gtk.Application):
             check = YesOrNo(_("Tasks Running In Background,Are You Sure You Want To Exit?"),self.window)
             check = check.check()
             if  check:
+                if win:
+                    self.window.config__["current_save_location"] = self.window.choicefolder.get_uri()[8:].replace("\\","/")
+                else:
+                    self.window.config__["current_save_location"] = self.window.choicefolder.get_uri()[7:]
                 self.quit()
             else:
                 return True
-                    
-        self.window.config__["current_save_location"] = self.window.choicefolder.get_uri()[7:]
+        if win:
+            self.window.config__["current_save_location"] = self.window.choicefolder.get_uri()[8:].replace("\\","/")
+        else:
+            self.window.config__["current_save_location"] = self.window.choicefolder.get_uri()[7:]
         change_metadata_info(self.window.config__)
         self.quit()
 
