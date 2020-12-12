@@ -34,3 +34,11 @@ Python Program To Download Videos From Facebook .
 
    or to  install run "sudo make install"
   
+* Requires Windows
+
+  * ``` Visual C++ Redistributable  ```
+
+
+* Install On Windows
+
+  * <https://github.com/yucefsourani/pyfbdown/releases/download/1.0/pyfbdown-setup.exe>
